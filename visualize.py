@@ -30,11 +30,27 @@ def plot_json(_args):
 
         # Place a red line at the end of the phase
         plt.axvline(x=len(tonic) - 1, color="red", linestyle="--")
-
-    # Normalize and plot
-    tonic /= np.linalg.norm(tonic)
-    plt.plot(tonic)
-
+    
+    # CMNDF
+    diff = [0] * len(tonic)
+    for i in range(len(tonic)):
+        for j in range(len(tonic) - i):
+            diff[i] = pow(tonic[j] - tonic[j+i], 2)
+            
+    cmndf = [0] * len(tonic)
+    cmndf[0] = 1
+    
+    for i in range(1, len(diff)):
+        dsum = 0
+        
+        for j in range(1, i+1):
+            dsum += diff[j]
+            
+        cmndf[i] = diff[i] * (i / dsum)
+        
+    plt.plot(cmndf, c="green")
+    plt.plot(tonic, c="orange")
+    
     plt.title("GSR Test Data")
     plt.ylabel("Skin Conductance Response")
     plt.xlabel("Time (number of samples)")
