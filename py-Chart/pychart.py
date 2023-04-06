@@ -5,6 +5,7 @@ import pyqtgraph as pg
 from random import randint
 import serial
 from enum import Enum
+from typing import Callable
 import sys  # We need sys so that we can pass argv to QApplication
 import os
 import json
@@ -14,6 +15,7 @@ S_BTN_WID = 75 # Setting up a global parameter for button width
 
 @dataclass
 class Pen:
+    dashed: bool = False
     @property
     def RED(self):
         return pg.mkPen(color=(255,0,0))    
@@ -26,10 +28,93 @@ class Pen:
     @property
     def PURPLE(self):
         return pg.mkPen(color=(255,0,255))
+    @property
+    def CYAN(self):
+        return pg.mkPen(color=(0,255, 255))
+
+class Graph_Layout(QtWidgets.QWidget):
+    def __init__(self, 
+                 file_button_method: Callable, 
+                 graph_number: int=1, 
+                 *args, **kwargs):
+
+        super(Graph_Layout, self).__init__(*args, **kwargs)
+        # Create required objects
+        layout = QtWidgets.QVBoxLayout()
+        bottom_bar_layout = QtWidgets.QHBoxLayout()   
+        self.graph = pg.PlotWidget()
+        self.label = QtWidgets.QLabel("None")
+
+        # Setup for required objects
+        self.file_button = QtWidgets.QPushButton("Browse")  
+        self.file_button.setMaximumWidth(S_BTN_WID)
+        self.file_button.clicked.connect(file_button_method)
+
+        self.graph_number = graph_number
+
+        self.graph.setTitle(f"Graph {graph_number}", color="b", size='20pt')        
+        self.graph.showGrid(x=True, y=True)
+
+        #self.graph.setBackground("w")
+
+        # Layout configuration
+        bottom_bar_layout.addWidget(self.file_button)
+        bottom_bar_layout.addWidget(self.label)
+
+        layout.addWidget(self.graph)
+        layout.addLayout(bottom_bar_layout)
+
+        self.setLayout(layout)
+    
+    def set_title(self, title: str, color: str="b", size: str='20pt'):
+        self.graph.setTitle(f"{title}", color=color, size=size)
+    
+class Audio_Graph_Layout(QtWidgets.QWidget):
+    def __init__(self, 
+                 file_button_method: Callable, 
+                 play_button_method: Callable,
+                 graph_number: int = 1, 
+                 *args, **kwargs):
+
+        super(Audio_Graph_Layout, self).__init__(*args, **kwargs)
+        """ A method that creates an audio_graph graph view up to 10"""
+
+         # Create required objects
+        layout = QtWidgets.QVBoxLayout()
+        self.bottom_bar_layout = QtWidgets.QHBoxLayout()   
+        self.graph = pg.PlotWidget()
+        self.label = QtWidgets.QLabel("None")
+
+        # Setup for required objects
+        self.file_button = QtWidgets.QPushButton("Browse")  
+        self.file_button.setMaximumWidth(S_BTN_WID)
+        self.file_button.clicked.connect(file_button_method)
+        self.playBtn = QtWidgets.QPushButton("Play")
+        self.playBtn.setMaximumWidth(S_BTN_WID)
+        self.playBtn.clicked.connect(play_button_method)
+
+        self.graph.setTitle(f"Audio Graph {graph_number}", color="b", size='20pt')        
+        self.graph.showGrid(x=True, y=True)
+        #g.setBackground("w")
+
+        # Layout configuration
+        self.bottom_bar_layout.addWidget(self.file_button)
+        self.bottom_bar_layout.addWidget(self.label)
+        self.bottom_bar_layout.addWidget(self.playBtn)
+
+        self.graph_number = graph_number
 
 
+        # Layout configuration
+        layout.addWidget(self.graph)
+        layout.addLayout(self.bottom_bar_layout)
 
+        self.setLayout(layout)
+    
+    def set_title(self, title: str, color: str="b", size: str='20pt'):
+        self.graph.setTitle(f"{title}", color=color, size=size)
 
+    
 class PyChart(QtWidgets.QMainWindow):
 
     def __init__(self, n_g=1, f_s=20, serial_dev="/dev/ttyUSB0", *args, **kwargs):
@@ -175,31 +260,13 @@ class PyChart(QtWidgets.QMainWindow):
             print("Cannot create another graph!")
             return -1
 
-        # Create required objects
-        layout = QtWidgets.QHBoxLayout()   
-        g = pg.PlotWidget()
-        lbl = QtWidgets.QLabel("None")
+        graph = Graph_Layout(lambda ch, i=self.num_graphs: self.file_button_pressed(i), graph_number=self.num_graphs+1)
+        graph.set_title(f"Graph {self.num_graphs + 1}")
 
-        # Setup for required objects
-        btn = QtWidgets.QPushButton("Browse")  
-        btn.setMaximumWidth(S_BTN_WID)
-        btn.clicked.connect(lambda ch, i=self.num_graphs: self.file_button_pressed(i))
-
-        g.setTitle(f"Graph {self.num_graphs + 1}", color="b", size='20pt')        
-        g.showGrid(x=True, y=True)
-        #g.setBackground("w")
-
-        # Layout configuration
-        layout.addWidget(btn)
-        layout.addWidget(lbl)
-
-        # Adding this to class scope lists
-        self.graphWidgets.append(g)
-        self.fileLabels.append(lbl)
-        self.chooseFileButtons.append(btn)
-        self.chart_bottom_layouts.append(QtWidgets.QHBoxLayout())
-        self.graph_layout.addWidget(g)
-        self.graph_layout.addLayout(layout)
+        self.graphWidgets.append(graph.graph)
+        self.fileLabels.append(graph.label)
+        self.chooseFileButtons.append(graph.file_button)
+        self.graph_layout.addWidget(graph)
         self.num_graphs += 1
 
     def create_audio_graph_view(self):
@@ -209,38 +276,15 @@ class PyChart(QtWidgets.QMainWindow):
         if(self.num_graphs >= 10):
             print("Cannot create another graph!")
             return -1
+        
+        graph = Audio_Graph_Layout(lambda ch, i=self.num_graphs: self.file_button_pressed(i),lambda ch, i=self.num_graphs: self.play_audio(i),graph_number=self.num_graphs+1)
+        graph.set_title(f"Audio Graph {self.num_graphs + 1}", color="b", size='20pt')        
 
-        # Create required objects
-        layout = QtWidgets.QHBoxLayout()   
-        g = pg.PlotWidget()
-        lbl = QtWidgets.QLabel("None")
-
-        # Setup for required objects
-        btn = QtWidgets.QPushButton("Browse")  
-        btn.setMaximumWidth(S_BTN_WID)
-        btn.clicked.connect(lambda ch, i=self.num_graphs: self.file_button_pressed(i))
-
-        playBtn = QtWidgets.QPushButton("Play")
-        playBtn.setMaximumWidth(S_BTN_WID)
-        playBtn.clicked.connect(lambda ch, i=self.num_graphs: self.play_audio(i))
-
-        g.setTitle(f"Audio Graph {self.num_graphs + 1}", color="b", size='20pt')        
-        g.showGrid(x=True, y=True)
-        #g.setBackground("w")
-
-        # Layout configuration
-        layout.addWidget(btn)
-        layout.addWidget(lbl)
-        layout.addWidget(playBtn)
-
-        # Adding this to class scope lists
-        self.graphWidgets.append(g)
-        self.fileLabels.append(lbl)
-        self.chooseFileButtons.append(btn)
-        self.playButtons.append(playBtn)
-        self.chart_bottom_layouts.append(QtWidgets.QHBoxLayout())
-        self.graph_layout.addWidget(g)
-        self.graph_layout.addLayout(layout)
+        self.graphWidgets.append(graph.graph)
+        self.fileLabels.append(graph.label)
+        self.chooseFileButtons.append(graph.file_button)
+        self.playButtons.append(graph.playBtn)
+        self.graph_layout.addWidget(graph)
         self.num_graphs += 1
     
     def play_audio(self, g_id):
