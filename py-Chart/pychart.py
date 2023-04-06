@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
+from dataclasses import dataclass
 import numpy as np
 import pyqtgraph as pg
 from random import randint
@@ -11,11 +12,22 @@ import json
 
 S_BTN_WID = 75 # Setting up a global parameter for button width
 
-class Pens(Enum):
-    RED    = pg.mkPen(color=(255,0,0))    
-    BLUE   = pg.mkPen(color=(0,0,255))
-    GREEN  = pg.mkPen(color=(0,255,0))
-    PURPLE = pg.mkPen(color=(255,0,255))
+@dataclass
+class Pen:
+    @property
+    def RED(self):
+        return pg.mkPen(color=(255,0,0))    
+    @property
+    def BLUE(self):
+        return pg.mkPen(color=(0,0,255))
+    @property
+    def GREEN(self):
+        return pg.mkPen(color=(0,255,0))
+    @property
+    def PURPLE(self):
+        return pg.mkPen(color=(255,0,255))
+
+
 
 
 class PyChart(QtWidgets.QMainWindow):
@@ -33,6 +45,7 @@ class PyChart(QtWidgets.QMainWindow):
         self.sample_rate_hz = f_s
         self.sample_T_ms = int(1000 / f_s)
         self.wtc = True                     # Want to connect a serial device?
+
         try:
             self.bus = serial.Serial(port=serial_dev, baudrate=115200, timeout=self.sample_T_ms/1000)
         except serial.SerialException:
@@ -380,11 +393,11 @@ class PyChart(QtWidgets.QMainWindow):
             # Label the phase in the middle of its plot
             stress_rating = data[i]["stress_rating"]
             label = pg.TextItem(f"{i}\n{stress_rating}")
-            _x = len(tonic)
-            label.setPos(_x, 0.1)
+            _x = len(tonic)-1
+            label.setPos(_x, 5)
             line_labels.append(label)
             
-            line = pg.InfiniteLine(pos=len(tonic), pen=(pg.mkPen((0, 0, 255), dash=[2, 4])), movable=False)
+            line = pg.InfiniteLine(pos=len(tonic)-1, pen=(pg.mkPen((0, 0, 255), dash=[2, 4])), movable=False)
             lines.append(line)
 
         diff = [0]*len(tonic)
@@ -415,8 +428,8 @@ class PyChart(QtWidgets.QMainWindow):
 
         x = [i for i in range(len(tonic))]
 
-        self.graphWidgets[g_id].plot(x,tonic, pen=self.pens[0])
-        self.graphWidgets[g_id].plot(x,cmndf, pen=self.pens[2])
+        self.graphWidgets[g_id].plot(x,tonic, pen=Pen().RED)
+        self.graphWidgets[g_id].plot(x,cmndf, pen=Pen().GREEN)
 
 
     def connect_serial_cli(self):
