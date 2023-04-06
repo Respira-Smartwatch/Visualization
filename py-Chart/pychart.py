@@ -387,10 +387,27 @@ class PyChart(QtWidgets.QMainWindow):
             line = pg.InfiniteLine(pos=len(tonic), pen=(pg.mkPen((0, 0, 255), dash=[2, 4])), movable=False)
             lines.append(line)
 
+        diff = [0]*len(tonic)
+
+        for i in range(len(tonic)):
+            for j in range(len(tonic)-i):
+                diff[i] = pow(tonic[j] - tonic[j+i], 2)
+        
+        cmndf = [0] * len(tonic)
+        cmndf[0] = 1
+
+        for i in range(1, len(diff)):
+            dsum = 0
+
+            for j in range(1, i+1):
+                dsum += diff[j]
+            
+            cmndf[i] = diff[i] * (i / dsum)
+
 
         # Normalize and plot
-        tonic /= np.linalg.norm(tonic)
-        
+        #tonic /= np.linalg.norm(tonic)
+
         for line, label in zip(lines, line_labels):
             self.graphWidgets[g_id].addItem(line)
             self.graphWidgets[g_id].addItem(label)
@@ -398,7 +415,8 @@ class PyChart(QtWidgets.QMainWindow):
 
         x = [i for i in range(len(tonic))]
 
-        self.graphWidgets[g_id].plot(x,tonic.tolist(), pen=self.pens[0])
+        self.graphWidgets[g_id].plot(x,tonic, pen=self.pens[0])
+        self.graphWidgets[g_id].plot(x,cmndf, pen=self.pens[2])
 
 
     def connect_serial_cli(self):
