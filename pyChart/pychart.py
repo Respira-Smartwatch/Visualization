@@ -33,8 +33,6 @@ class Pen:
     def CYAN(self):
         return pg.mkPen(color=(0,255, 255))
 
-
-
     
 class PyChart(QtWidgets.QMainWindow):
 
@@ -113,11 +111,8 @@ class PyChart(QtWidgets.QMainWindow):
             self.create_graph_view()
 
         # Sidebar layout stuff
-        #sidebar_layout.addWidget(self.plotFileLoc)
         self.sidebar_layout.addWidget(self.addPltBtn)
         self.sidebar_layout.addWidget(self.audioPltBtn)
-        #sidebar_layout.addWidget(self.saveFileLoc)
-        #self.sidebar_layout.addWidget(self.mockButton)
 
         # Dummy widget - layout application --------------------------------- 
         # Create and utilize dummy widget (have to apply layout to dummy)
@@ -131,7 +126,6 @@ class PyChart(QtWidgets.QMainWindow):
         self.x = None
         self.y = None
         self.y2 = None
-        
 
         # pen is the line creation method: decides plot colors
         self.pens = []
@@ -154,10 +148,6 @@ class PyChart(QtWidgets.QMainWindow):
         self.setup_graph_data()
         for idx, y in enumerate(self.y_list):
             self.live_lines.append(self.graphWidgets[0].plot(self.x, y, pen=self.pens[0]))
-
-            #self.data_line = self.graphWidgets[0].plot(self.x,self.y, pen=self.red_pen)
-            #self.data_line2 = self.graphWidgets[0].plot(self.x, self.y2, pen=self.blue_pen)
-
 
         # Start a timer function - Need a timer to update graph at certain speed.
         self.timer = QtCore.QTimer()                        # Initialize a timer
@@ -320,9 +310,11 @@ class PyChart(QtWidgets.QMainWindow):
 
     def plot_static(self, g_id:int, inFile:str=None, x_data: list = None, y_data: list = None, isolate=True, pen=None):
         """ Plots static data - file formats described in read_file method"""
+
         # Clear given plot
         if isolate:
             self.graphWidgets[g_id].clear()
+
         # Pull Data from file (supported files?)
         if inFile:
             x, data = self.read_file(inFile)
@@ -330,14 +322,13 @@ class PyChart(QtWidgets.QMainWindow):
             x = x_data
             data = y_data
 
-
         # Plot the data
-
         for idx, source in enumerate(data):
             pen_idx = idx%len(self.pens)
             self.graphWidgets[g_id].plot(x, source, pen=self.pens[pen_idx])
     
     def plot_static_datacollect_json(self, g_id: int, inFilepath: str, isolate=True, pen=None):
+        """Plots json files to spec specified by DATACOLLECT for RESPIRA"""
         if isolate:
             self.graphWidgets[g_id].clear()
         
@@ -382,7 +373,6 @@ class PyChart(QtWidgets.QMainWindow):
             
             cmndf[i] = diff[i] * (i / dsum)
 
-
         # Normalize and plot
         #tonic /= np.linalg.norm(tonic)
 
@@ -398,6 +388,7 @@ class PyChart(QtWidgets.QMainWindow):
 
 
     def connect_serial_cli(self):
+        """Connects a serial bus"""
         print("No serial bus present\n\nWould you like to connect to a bus?")
         while True:
             ans = input("y/n:")
@@ -430,8 +421,7 @@ class PyChart(QtWidgets.QMainWindow):
             print("No Live Plotting Available (No Serial Present)")
             return
             
-                
-        #data = int.from_bytes(self.bus.read(1), 'little')
+        # what even is this... XD 
         data = str(self.bus.readline().decode()).strip().split(',')
 
         #data = float(data[0]) if data[0] else None
@@ -480,9 +470,6 @@ class PyChart(QtWidgets.QMainWindow):
         self.live_lines[0].setData(self.x, self.y_list[0])
         self.live_lines[1].setData(self.x, self.y_list[1])
         
-
-
-
 def main():
     app = QtWidgets.QApplication(sys.argv)
     main = PyChart(f_s= 50, n_g=2)
