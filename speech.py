@@ -16,7 +16,7 @@ for i in phases:
 	if len(maximum) == 0:
 		j = ''
 		maximum = ''
-	output[i] = str(key + ':' + str(maximum))
+	output[i] = str(key + str(maximum) + ' &' + ' Stress Rating: ' + str(rate))
 
 for i in output:
 	print(i + ': ' + output[i])
