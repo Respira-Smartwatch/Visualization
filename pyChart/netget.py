@@ -3,11 +3,26 @@ import threading
 import time
 
 class NetGet:
-    def __init__(self, connection_ip: str=None, connection_port: int=44444):
-        self.ip = connection_ip if connection_ip else '140.9.9.9'
+    def __init__(self, connection_ip: str=None, connection_port: int=44443):
+        self.host = connection_ip if connection_ip else '140.9.9.9'
         self.port = connection_port
         self.socket = None
-        self.connect()
+        self.setupSocket()
+
+    def setupSocket(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
+        return self.socket
+
+    def receive(self):
+        reply = self.socket.recv(1024)
+        if reply:
+            return reply.decode('utf-8')
+        else:
+            return None
+
+    def close(self):
+        self.socket.close()
 
     def connect(self):
         def make_sock():
@@ -31,12 +46,15 @@ class NetGet:
     def read_data(self):
         if self.socket:
             print("GETTING?")
-            return int(self.socket.recv(1))
+            return int(self.socket.recv(1024))
         else:
+        
             print("NO SOCKET - NO DATA")
             return -1
 
 if __name__ == "__main__":
     ng = NetGet(connection_ip="140.182.152.100")
     while True:
-        print(ng.read_data())
+        data = ng.receive()
+        if data:
+            print(data)
