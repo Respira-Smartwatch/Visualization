@@ -45,7 +45,7 @@ class NetGet:
 
     def read_data(self):
         if self.socket:
-            print("GETTING?")
+            #print("GETTING?")
             return int(self.socket.recv(1024))
         else:
         
