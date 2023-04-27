@@ -11,6 +11,7 @@ import os
 import json
 
 from graphWidgets import Graph_Layout, Audio_Graph_Layout
+from netget import NetGet
 
 S_BTN_WID = 75 # Setting up a global parameter for button width
 
@@ -56,6 +57,12 @@ class PyChart(QtWidgets.QMainWindow):
             print("Error: Serial Bus Not Present")
             self.bus = 0
             self.connect_serial_cli()
+
+        try:
+            self.tcp = NetGet(connection_ip="140.182.152.100")
+        except:
+            print("ERROR in TCP")
+
 
         # Setup for modifiable layouts
         self.chart_bottom_layouts = []
@@ -156,6 +163,9 @@ class PyChart(QtWidgets.QMainWindow):
         debug=False
         if self.bus and not debug:
             self.timer.timeout.connect(self.live_plot_update)   # Set timeout behaviour
+            self.timer.start()                                  # Start timer
+        elif self.tcp and not debug:
+            self.timer.timeout.connect(self.live_plot_update_tcp)   # Set timeout behaviour
             self.timer.start()                                  # Start timer
         elif debug:
             self.timer.timeout.connect(self.random_liveplot_update) # For testing
@@ -423,6 +433,8 @@ class PyChart(QtWidgets.QMainWindow):
             
         # what even is this... XD 
         data = str(self.bus.readline().decode()).strip().split(',')
+        #print(self.tcp.read_data())
+        #data = self.tcp.read_data()
 
         #data = float(data[0]) if data[0] else None
         try:
@@ -456,7 +468,37 @@ class PyChart(QtWidgets.QMainWindow):
             #self.y.append(data)
             #self.y2.append(data2)
             #self.data_line.setData(self.x, self.y)
-            #self.data_line2.setData(self.x, self.y2)
+
+    def live_plot_update_tcp(self):
+        """The main function for live drawing: At the moment utilizes random data"""
+        if not self.tcp:
+            print("No Live Plotting Available (No TCP Present)")
+            return
+        
+            
+        # what even is this... XD 
+    #print(self.tcp.read_data())
+        data = self.tcp.read_data()
+        print(f"DATA={data}")
+        #data = float(data[0]) if data[0] else None
+        try:
+            s = float(data)
+        except ValueError:
+            if data == '':
+                pass
+            else:
+                print(f"ERROR {data}")
+
+            return
+
+        if s:
+            self.x = self.x[1:]
+            self.x.append(self.x[-1] + 1)
+            self.y_list[0].pop(0)
+            self.y_list[0].append(s)
+            print(self.x)
+            self.live_lines[0].setData(self.x, self.y_list[0])
+            self.live_lines[1].setData(self.x, self.y_list[0])       #self.data_line2.setData(self.x, self.y2)
         
     def random_liveplot_update(self):
         self.x = self.x[1:]
