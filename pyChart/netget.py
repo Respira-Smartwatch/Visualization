@@ -3,7 +3,7 @@ import threading
 import time
 
 class NetGet:
-    def __init__(self, connection_ip: str=None, connection_port: int=44443):
+    def __init__(self, connection_ip: str=None, connection_port: int=44444):
         self.host = connection_ip if connection_ip else '140.9.9.9'
         self.port = connection_port
         self.socket = None
@@ -46,7 +46,7 @@ class NetGet:
     def read_data(self):
         if self.socket:
             #print("GETTING?")
-            return int(self.socket.recv(1024))
+            return float(self.socket.recv(1024).decode('utf-8'))
         else:
         
             print("NO SOCKET - NO DATA")

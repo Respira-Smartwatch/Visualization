@@ -484,11 +484,8 @@ class PyChart(QtWidgets.QMainWindow):
         try:
             s = float(data)
         except ValueError:
-            if data == '':
-                pass
-            else:
-                print(f"ERROR {data}")
-
+            data = None
+            print(f"ERROR {data}")
             return
 
         if s:
